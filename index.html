@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Karen Lin — Product Designer</title>
+<meta name="description" content="Karen Lin — Product Designer, Product Manager, UX Designer. Selected projects, photography, and a note on kindness.">
+<meta name="theme-color" content="#4D653E">
+<meta property="og:title" content="Karen Lin — Product Designer">
+<meta property="og:description" content="Product Designer, Product Manager, UX Designer.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%234D653E'/><text y='68' x='50' text-anchor='middle' font-size='54' font-family='Georgia,serif' fill='%23EDE7DA'>K</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css?v=20261020">
+</head>
+<body>
+
+<a class="skip" href="#projects">Skip to projects</a>
+
+<!-- ══════════════════════════ NAV ══════════════════════════ -->
+<header class="nav" id="nav">
+  <a class="nav__mark" href="#top"><span>Karen Lin</span></a>
+  <nav class="nav__links" aria-label="Sections">
+    <a href="#projects">Projects</a>
+    <a href="#photography">Photography</a>
+    <a href="#about">About</a>
+    <a href="#contact" class="nav__cta">Contact</a>
+  </nav>
+</header>
+
+<!-- ══════════════════════════ HERO ══════════════════════════ -->
+<section class="hero" id="top">
+  <canvas id="liquid" aria-hidden="true"></canvas>
+  <noscript><div class="hero__noscript"></div></noscript>
+
+  <div class="hero__inner">
+    <div class="hero__top">
+      <p class="hero__eyebrow"><span class="dot" aria-hidden="true"></span>Kindness is golden</p>
+    </div>
+
+    <div class="hero__bottom">
+      <h1 class="hero__name">Karen&nbsp;Lin</h1>
+      <p class="hero__roles">
+        <span>Product Designer</span>
+        <em aria-hidden="true">/</em>
+        <span>Product Manager</span>
+        <em aria-hidden="true">/</em>
+        <span>UX Designer</span>
+      </p>
+      <p class="hero__hint" id="heroHint" aria-hidden="true">Move across the surface</p>
+    </div>
+  </div>
+
+  <p class="visually-hidden">Beneath the surface of this page, two words are embossed: “Be kind.”</p>
+</section>
+
+<!-- ══════════════════════════ PROJECTS ══════════════════════════ -->
+<main>
+<section class="section section--projects" id="projects">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <h2 class="sec-head__title">Projects</h2>
+      <p class="sec-head__note">Three products, each starting from the same question — what is actually getting in someone’s way?</p>
+    </div>
+
+    <ul class="projects" id="projectList">
+
+      <li class="project reveal" data-project="gbcs">
+        <h3 class="project__title"><a href="https://gbcsgroup.com" target="_blank" rel="noopener noreferrer">GBCS Group Website</a></h3>
+
+        <div class="project__stage project__anim is-live">
+          <img src="assets/projects/gbcs-03.jpg" alt="The GBCS website hero: an aircraft, a container ship and a truck at night" loading="lazy" style="object-position:4% 50%">
+        </div>
+
+        <div class="project__stage project__ui is-live gbcs-live" data-gbcs-live>
+          <img src="assets/projects/gbcs-01.jpg" alt="The GBCS website homepage: a monochrome container ship behind the GBCS Group logo" loading="lazy">
+          <iframe data-src="archive/gbcs-v1/index.html" title="Live preview of the GBCS website homepage, with its hero video, traveling underline and particle cursor" tabindex="-1" aria-hidden="true" scrolling="no"></iframe>
+        </div>
+
+        <div class="project__desc">
+          <div class="project__about">
+            <p class="project__sub">Designed and built a fleet advisory firm&rsquo;s website twice, WordPress first and then in code, with motion that keeps a premium brand calm.</p>
+            <ul class="project__tags"><li>Web design &amp; build</li><li>Brand system</li><li>Motion</li></ul>
+            <a class="project__ext" href="https://gbcsgroup.com" target="_blank" rel="noopener noreferrer">Visit gbcsgroup.com <span aria-hidden="true">&nearr;</span></a>
+          </div>
+          <button class="project__link" type="button" aria-haspopup="dialog">
+            Read case study<span class="visually-hidden">: GBCS Group Website</span> <span aria-hidden="true">&rarr;</span>
+          </button>
+        </div>
+      </li>
+
+      <li class="project reveal" data-project="tossless">
+        <h3 class="project__title"><span>TossLess</span></h3>
+
+        <div class="project__stage project__anim" data-tossbin>
+          <canvas role="img" aria-label="Potatoes, apples, broccoli, bread and chocolate tumbling into a wire wastebasket"></canvas>
+        </div>
+
+        <div class="project__stage project__ui" data-ui="tossless">
+          <canvas role="img" aria-label="The TossLess app on two phones, stepping through the home screen, Expiring Soon, the camera detecting an item, the restock list and its notifications"></canvas>
+        </div>
+
+        <div class="project__desc">
+          <div class="project__about">
+            <p class="project__sub">Helping households use food before it goes to waste</p>
+            <ul class="project__tags"><li>End-to-end UX</li><li>Mobile app</li><li>User research</li></ul>
+          </div>
+          <button class="project__link" type="button" aria-haspopup="dialog">
+            Read case study<span class="visually-hidden">: TossLess</span> <span aria-hidden="true">→</span>
+          </button>
+        </div>
+      </li>
+
+      <li class="project reveal" data-project="steam">
+        <h3 class="project__title"><span>Steam App Redesign</span></h3>
+
+        <div class="project__stage project__anim" data-steamsources>
+          <canvas role="img" aria-label="YouTube, Reddit and SteamDB, joined to the Steam logo by dashed lines, drawn into it one at a time"></canvas>
+        </div>
+
+        <div class="project__stage project__ui" data-ui="steam">
+          <canvas role="img" aria-label="The redesigned Steam app on two phones, stepping through home, Fit Score and trade-in screens"></canvas>
+        </div>
+
+        <div class="project__desc">
+          <div class="project__about">
+            <p class="project__sub">Cutting decision fatigue out of buying games</p>
+            <ul class="project__tags"><li>Product strategy</li><li>12 interviews</li><li>Team of 3</li></ul>
+          </div>
+          <button class="project__link" type="button" aria-haspopup="dialog">
+            Read case study<span class="visually-hidden">: Steam App Redesign</span> <span aria-hidden="true">→</span>
+          </button>
+        </div>
+      </li>
+
+      <li class="project reveal" data-project="aquila">
+        <h3 class="project__title"><span>Aquila Health Network</span></h3>
+
+        <div class="project__stage project__anim" data-aquila>
+          <canvas role="img" aria-label="A week of appointments on a Monday to Friday calendar, sorting itself into a list ranked by predicted no-show risk, highest risk first"></canvas>
+        </div>
+
+        <div class="project__stage project__ui" data-ui="aquila">
+          <canvas role="img" aria-label="A stack of browser windows cycling through the Aquila Tableau dashboards: clinical operations, revenue and access, no-show risk and feature importance"></canvas>
+        </div>
+
+        <div class="project__desc">
+          <div class="project__about">
+            <p class="project__sub">Built a Power BI analytics platform and predictive no-show model for a 40-clinic healthcare network, targeting a 15% reduction in missed appointments and 5% revenue growth.</p>
+            <ul class="project__tags"><li>Analytics</li><li>Data modeling</li><li>Predictive POC</li></ul>
+          </div>
+          <button class="project__link" type="button" aria-haspopup="dialog">
+            Read case study<span class="visually-hidden">: Aquila Health Network</span> <span aria-hidden="true">→</span>
+          </button>
+        </div>
+      </li>
+
+
+      <li class="project project--closed reveal">
+        <h3 class="project__title"><span>Apple Health — Cycle Tracking</span></h3>
+
+        <div class="project__stage project__anim" data-cyclering>
+          <canvas role="img" aria-label="A 28-day cycle ring with the period and fertile window marked, a marker moving through the month"></canvas>
+          <span class="project__matte" aria-hidden="true"></span>
+        </div>
+
+        <div class="project__stage project__ui" data-ui="cycle">
+          <canvas role="img" aria-label="An empty phone: the redesigned screens for this project are still in progress"></canvas>
+          <span class="project__matte"><span class="project__matte-label">Under user research&hellip;</span></span>
+        </div>
+
+      </li>
+
+    </ul>
+  </div>
+</section>
+
+<!-- ══════════════════════════ PHOTOGRAPHY ══════════════════════════ -->
+<section class="section section--photo" id="photography">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <h2 class="sec-head__title">Photography</h2>
+      <p class="sec-head__note">Design is where I solve. Photography is where I notice.</p>
+    </div>
+
+    <div class="photo-tabs reveal" role="tablist" aria-label="Photography collections">
+      <button class="tab-btn active" data-tab="daily" role="tab" id="tab-daily" aria-controls="panel-daily" aria-selected="true">Daily Photography</button>
+      <button class="tab-btn" data-tab="hearts" role="tab" id="tab-hearts" aria-controls="panel-hearts" aria-selected="false" tabindex="-1">Heart Collection</button>
+    </div>
+
+    <div class="tab-panel active" data-panel="daily" role="tabpanel" id="panel-daily" aria-labelledby="tab-daily">
+      <p class="tab-desc">An ongoing, undirected record — light on a wall, someone's hands, the ten seconds before a place empties out.</p>
+      <div class="photo-grid" id="dailyGrid"></div>
+    </div>
+
+    <div class="tab-panel" data-panel="hearts" role="tabpanel" id="panel-hearts" aria-labelledby="tab-hearts">
+      <p class="tab-desc"><!-- Heart Collection description --></p>
+      <div class="photo-grid" id="heartsGrid"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════ ABOUT ══════════════════════════ -->
+<section class="section section--about" id="about">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <h2 class="sec-head__title">About me</h2>
+    </div>
+
+    <div class="about">
+      <div class="about__portrait reveal">
+        <div class="portrait" id="portrait">
+          <img src="assets/photography/portrait.jpg" alt="Portrait of Karen Lin" loading="lazy" decoding="async" onerror="this.closest('.portrait').classList.add('is-empty');this.remove();">
+          <span class="portrait__fallback" aria-hidden="true">KL</span>
+        </div>
+      </div>
+
+      <div class="about__text reveal">
+        <p class="about__lead">I’m Karen, a product designer who leads a design team, still hands-on with the craft: flows, systems, the pixel-level decisions that make something feel considered instead of assembled.</p>
+        <p>My process starts with research, not screens. I run interviews, sit with the uncomfortable finding, and let it reshape the brief rather than decorate it. But the work lives or dies in the details after that, how a label reads, how a flow holds together under edge cases, where a system bends and where it shouldn’t. A screen that says <em>“expired”</em> makes someone feel judged; one that says <em>“use up soon”</em> gets them to actually cook dinner. That gap is design, not copywriting, the words are just where you can see it happen.</p>
+        <p>I lead a team day to day, but I stay close to the craft because the thinking doesn’t scale if I stop doing it myself.</p>
+        <p>Off the clock I photograph, and collect hearts I find by accident. Same instinct as the work. Pay attention, be kind about what you find.</p>
+
+        <div class="about__cols">
+          <div class="about__col">
+            <h3>What I do</h3>
+            <ul>
+              <li>Product &amp; UX design</li>
+              <li>Product management</li>
+              <li>User research &amp; usability testing</li>
+              <li>Design systems</li>
+              <li>Prototyping</li>
+            </ul>
+          </div>
+          <div class="about__col">
+            <h3>Tools</h3>
+            <ul>
+              <li>Figma</li>
+              <li>Framer / Prototyping</li>
+              <li>Adobe CC</li>
+              <li>Notion, Jira</li>
+              <li>Light front-end</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════ CONTACT ══════════════════════════ -->
+<section class="section section--contact" id="contact">
+  <div class="wrap">
+    <p class="contact__eyebrow reveal">Currently open to product design &amp; PM roles</p>
+    <h2 class="contact__title reveal">Let’s create<br>kindness, together.</h2>
+    <a class="contact__mail reveal" href="mailto:k.lin@klindns.com">k.lin@klindns.com</a>
+    <ul class="contact__links reveal">
+      <li><a href="https://www.linkedin.com/in/kuanningkarenlin" target="_blank" rel="noopener noreferrer">LinkedIn <span aria-hidden="true">↗</span></a></li>
+      <li><a href="mailto:k.lin@klindns.com">Email <span aria-hidden="true">↗</span></a></li>
+    </ul>
+  </div>
+  <footer class="foot">
+    <p>© <span id="year">2026</span> Karen Lin</p>
+    <p class="foot__be">Kindness is golden.</p>
+  </footer>
+</section>
+</main>
+
+<!-- ══════════════════════════ CASE STUDY READER ══════════════════════════ -->
+<div class="reader" id="reader" role="dialog" aria-modal="true" aria-labelledby="readerTitle" hidden>
+  <div class="reader__scrim" data-close></div>
+  <article class="reader__panel">
+    <button class="reader__close" type="button" data-close aria-label="Close case study">
+      <span aria-hidden="true"></span>
+    </button>
+    <div class="reader__scroll" id="readerScroll"></div>
+  </article>
+</div>
+
+<!-- ══════════════════════════ LIGHTBOX ══════════════════════════ -->
+<div id="lightbox" class="lightbox" role="dialog" aria-modal="true" aria-label="Photo viewer">
+  <button class="lightbox-close" aria-label="Close">&times;</button>
+  <button class="lightbox-nav lightbox-prev" aria-label="Previous photo">&lsaquo;</button>
+  <img id="lightboxImg" src="" alt="">
+  <button class="lightbox-nav lightbox-next" aria-label="Next photo">&rsaquo;</button>
+</div>
+
+<script src="assets/js/liquid.js?v=20261020"></script>
+<script src="assets/js/content.js?v=20261020"></script>
+<script src="assets/js/site.js?v=20261020"></script>
+<script src="assets/js/heart-decor.js?v=20261020"></script>
+<script src="assets/js/flower-bloom.js?v=20261020"></script>
+<script src="assets/js/tossless-bin.js?v=20261020"></script>
+<script src="assets/js/steam-sources.js?v=20261020"></script>
+<script src="assets/js/cycle-ring.js?v=20261020"></script>
+<script src="assets/js/ui-display.js?v=20261020"></script>
+<script src="assets/js/aquila-risk.js?v=20261020"></script>
+<script src="assets/js/gbcs-preview.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+# macOS
+.DS_Store
+
+# Source material, not part of the website (originals, decks, raw images)
+/simply-static-*.zip
+/archive/
+/Hearts/
+/Photography/_originals/
+/_Steam App Redesign.pdf
+/K Lin profile.JPG
+/Green Tiles.JPG
+/flowers.jpg
+/heart_1.jpg
+/heart_2.jpg
+/heart_3.jpg
+
+# Local preview helper
+/.claude/
