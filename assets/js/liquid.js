@@ -145,6 +145,13 @@
   const float WAVE     = 26.0;   // how far a swell tilts the surface
   const float EMBOSS   = 9.5;    // relief of the lettering
   const float SHEEN    = 0.16;   // broad gloss -- pigment, not glitter
+  const float THICK    = 0.0058; // body over the plate, as a fraction of the
+                                 // hero's width: how far the pour spreads the
+                                 // relief it carries. Raise for a heavier pour
+                                 // and softer lettering, lower for a thinner
+                                 // one and a crisper edge.
+  const float SWIM     = 0.10;   // how far a moving pour drags the bump with it
+  const float BREATHE  = 1.6;    // how much the pour's own depth smothers it
 
   float txt(vec2 p){ return texture(uText, p).r; }
 
@@ -170,12 +177,35 @@
     energy = smoothstep(0.0, 0.8, energy);
     float reveal = uRestVis + (1.0 - uRestVis) * energy;
 
-    vec2 tt = uTextTexel * 2.2;
-    float tL = txt(uv - vec2(tt.x, 0.0));
-    float tR = txt(uv + vec2(tt.x, 0.0));
-    float tD = txt(uv - vec2(0.0, tt.y));
-    float tU = txt(uv + vec2(0.0, tt.y));
-    vec2  gradT = vec2(tR - tL, tU - tD) * EMBOSS * reveal;
+    // A thick pour cannot hold a sharp edge. The surface over a relief is a
+    // low-pass of it -- the heavier the body, the broader and softer the bump
+    // it raises -- so the relief is read over a wide kernel, and over two rings
+    // so the edge ramps rather than steps. Reading it at texel sharpness, as
+    // this did, describes a pour with no thickness at all, which is precisely
+    // what makes lettering look printed on the liquid instead of under it.
+    // The spread is a fraction of the hero's WIDTH, corrected for its shape so
+    // it stays round on screen; the lettering is sized off the width too, so a
+    // phone and a desktop end up equally soft.
+    vec2 spread = vec2(THICK, THICK * uRes.x / uRes.y);
+    vec2 tt = max(uTextTexel * 2.2, spread);
+
+    // The relief is fixed to the plate, but the pour above it slides, and the
+    // bump it raises slides with it. Lettering pinned to the same pixels while
+    // the liquid travels across it reads as a decal lying on the surface.
+    vec2 tuv = uv - gradRaw * SWIM;
+
+    vec2 g1 = vec2(txt(tuv + vec2(tt.x, 0.0)) - txt(tuv - vec2(tt.x, 0.0)),
+                   txt(tuv + vec2(0.0, tt.y)) - txt(tuv - vec2(0.0, tt.y)));
+    vec2 w  = tt * 2.1;
+    vec2 g2 = vec2(txt(tuv + vec2(w.x, 0.0)) - txt(tuv - vec2(w.x, 0.0)),
+                   txt(tuv + vec2(0.0, w.y)) - txt(tuv - vec2(0.0, w.y)));
+    // Deep where the pour has piled up, thin where it has been pushed aside.
+    // Relief presses through a thin skin and is smothered under a deep one, so
+    // the lettering breathes with the liquid rather than holding one fixed
+    // strength beneath all of it -- the push of a finger thins the pour over
+    // the plate, and the words come up hardest exactly in its wake.
+    float skin = clamp(1.0 - h * BREATHE, 0.45, 1.6);
+    vec2  gradT = (g1 * 0.55 + g2 * 0.45) * EMBOSS * reveal * skin;
 
     // One opaque surface: the swell and the relief pushing through it.
     vec3 N = normalize(vec3(-(gradH + gradT), 1.0));

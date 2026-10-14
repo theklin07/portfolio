@@ -33,6 +33,9 @@ Tuning constants at the top of the fragment shader in `assets/js/liquid.js`:
 | `WAVE` | how far a swell tilts the surface |
 | `EMBOSS` | relief of the lettering |
 | `SHEEN` | breadth of the gloss highlight |
+| `THICK` | **body of the pour over the plate**, as a fraction of the hero's width — how far the liquid spreads the relief it carries. The one to turn if the lettering looks too sharp or too soft |
+| `SWIM` | how far a moving pour drags the bump it raises along with it |
+| `BREATHE` | how much the pour's own depth smothers the relief |
 | `uRestVis` (JS, near the bottom) | how much of the relief a *still* surface keeps — raise it to leave the words permanently legible |
 
 ### Changing the phrase
@@ -60,6 +63,26 @@ permanently raised instead — a static embossed “Be kind” rather than a bla
 
 The liquid only responds to actual movement: a cursor left sitting on the hero
 stops disturbing it rather than drilling a well where it rests.
+
+### Keeping the lettering *in* the liquid
+
+A thick pour cannot hold a sharp edge, so the relief is deliberately not read at
+full sharpness. Three things keep the words part of the surface rather than
+printed on it, and all three are constants in the render shader:
+
+- **`THICK`** spreads the relief over a wide kernel, in two rings so the edge
+  ramps instead of stepping. Reading it at texel sharpness describes a pour with
+  no thickness at all, which is exactly what makes lettering look stuck on top.
+  Because the spread is a fraction of the hero's *width*, and the type is sized
+  off the width too, a phone and a desktop come out equally soft.
+  **Raise it for a heavier pour and softer words, lower it for a crisper edge.**
+  Past about `0.007` the thin strokes start to dissolve.
+- **`SWIM`** offsets where the relief is sampled by the liquid's own slope, so
+  the bump travels with the pour. Lettering pinned to fixed pixels while the
+  liquid slides across it reads as a decal.
+- **`BREATHE`** ties the relief's strength to the local depth: it presses
+  through where the pour has been pushed thin and is smothered where it has
+  piled up, so the words come up hardest in the wake of a finger or cursor.
 
 ### On phones
 
