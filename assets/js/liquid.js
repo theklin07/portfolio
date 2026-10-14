@@ -27,16 +27,6 @@
                    .filter(function (l) { return l.length; });
   var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  var gl = canvas.getContext('webgl2', {
-    alpha: false, antialias: false, depth: false, stencil: false,
-    premultipliedAlpha: false, powerPreference: 'high-performance'
-  });
-
-  if (!gl || !(gl.getExtension('EXT_color_buffer_float') ||
-               gl.getExtension('EXT_color_buffer_half_float'))) {
-    return fallback();
-  }
-
   function fallback() {
     hero.classList.add('is-fallback');
     canvas.style.display = 'none';
@@ -45,6 +35,28 @@
     t.setAttribute('aria-hidden', 'true');
     t.textContent = WORDS.split('|').join(' ');
     hero.insertBefore(t, hero.firstChild);
+    // Nothing to touch or move on a static plate -- the hint promises an
+    // interaction this view doesn't have, so it's removed rather than reworded.
+    var hintEl = document.getElementById('heroHint');
+    if (hintEl) hintEl.remove();
+  }
+
+  // Touch/no-hover devices (phones, most tablets) always get the static
+  // emboss rather than the live simulation. This isn't about capability --
+  // most of these devices can run WebGL2 fine -- it's about giving every
+  // phone the same deliberate, battery-cheap result instead of a coin flip
+  // on whether a given device happens to grant a WebGL2 context today.
+  var isTouch = !window.matchMedia('(hover: hover)').matches;
+  if (isTouch) return fallback();
+
+  var gl = canvas.getContext('webgl2', {
+    alpha: false, antialias: false, depth: false, stencil: false,
+    premultipliedAlpha: false, powerPreference: 'high-performance'
+  });
+
+  if (!gl || !(gl.getExtension('EXT_color_buffer_float') ||
+               gl.getExtension('EXT_color_buffer_half_float'))) {
+    return fallback();
   }
 
   /* ───────────────────────── shaders ───────────────────────── */
@@ -338,14 +350,13 @@
     paintText(cw * 2, ch * 2);
   }
 
-  /* ───────────────────────── input ───────────────────────── */
+  /* ───────────────────────── input ─────────────────────────
+     Reached only on hover-capable devices (mouse/trackpad) -- touch/no-hover
+     devices returned via fallback() above and never get here, so the hint
+     stays "Move across the surface" unconditionally. */
 
   var hint = document.getElementById('heroHint');
   var touched = false;
-
-  if (hint && !window.matchMedia('(hover: hover)').matches) {
-    hint.textContent = 'Touch the surface';
-  }
 
   function setPointer(clientX, clientY) {
     var r = hero.getBoundingClientRect();
