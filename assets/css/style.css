@@ -119,14 +119,31 @@ button{ font:inherit; color:inherit; }
   background:
     radial-gradient(120% 90% at 30% 25%, #5D7A4A 0%, transparent 60%),
     radial-gradient(100% 80% at 78% 78%, #3E5432 0%, transparent 65%),
+    linear-gradient(155deg, rgba(255,255,255,.07) 0%, transparent 30%, transparent 68%, rgba(0,0,0,.12) 100%),
     var(--green);
 }
+/* Static stand-in for the WebGL liquid emboss, used whenever WebGL2 (or one of
+   its float render-target extensions) isn't available -- e.g. Low Power Mode,
+   memory pressure, or an older GPU. Built to look like a deliberate engraved
+   plate on its own, not a broken version of the animated one: a soft
+   highlight/shadow pair reads the relief, and a diagonal gradient clipped to
+   the glyphs gives it the same quiet sheen instead of flat dead type. */
 .hero.is-fallback .hero__fallback-type{
   position:absolute; inset:0; display:grid; place-items:center;
+  padding-inline:var(--pad);
   font-family:var(--f-display); font-weight:500;
-  font-size:clamp(4rem,18vw,15rem); letter-spacing:-.02em;
-  color:transparent;
-  text-shadow:0 1px 0 rgba(255,255,255,.055), 0 -1px 0 rgba(0,0,0,.16);
+  font-size:clamp(3.6rem,16vw,13rem); letter-spacing:-.025em; line-height:.92;
+  text-align:center;
+  color:rgba(239,234,223,.05);
+  background-image:linear-gradient(160deg,
+    rgba(255,255,255,.30) 0%, rgba(239,234,223,.09) 42%,
+    rgba(0,0,0,.11) 64%, rgba(255,255,255,.15) 100%);
+  -webkit-background-clip:text; background-clip:text;
+  -webkit-text-fill-color:transparent;
+  text-shadow:
+    0 1.5px 0 rgba(255,255,255,.16),
+    0 -1.5px 1.5px rgba(0,0,0,.32),
+    0 16px 36px rgba(0,0,0,.24);
   -webkit-text-stroke:0;
   user-select:none; pointer-events:none;
 }
