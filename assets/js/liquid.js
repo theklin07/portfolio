@@ -41,13 +41,10 @@
     if (hintEl) hintEl.remove();
   }
 
-  // Touch/no-hover devices (phones, most tablets) always get the static
-  // emboss rather than the live simulation. This isn't about capability --
-  // most of these devices can run WebGL2 fine -- it's about giving every
-  // phone the same deliberate, battery-cheap result instead of a coin flip
-  // on whether a given device happens to grant a WebGL2 context today.
+  // Phones get the same liquid as the desktop, driven by finger drags. They
+  // run it at a lower resolution (see resize) so it stays smooth, and fall
+  // back to the static plate only if WebGL2 isn't available.
   var isTouch = !window.matchMedia('(hover: hover)').matches;
-  if (isTouch) return fallback();
 
   var gl = canvas.getContext('webgl2', {
     alpha: false, antialias: false, depth: false, stencil: false,
@@ -327,7 +324,7 @@
     if (cw < 4 || ch < 4) { needsResize = true; return; }
     needsResize = false;
 
-    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var dpr = Math.min(window.devicePixelRatio || 1, isTouch ? 1.5 : 2);
     var w = Math.max(1, Math.round(cw * dpr));
     var h = Math.max(1, Math.round(ch * dpr));
     if (w === viewW && h === viewH) return;
@@ -335,7 +332,7 @@
     canvas.width = w; canvas.height = h;
 
     var long = Math.max(cw, ch);
-    var scale = Math.min(1, 420 / long);
+    var scale = Math.min(1, (isTouch ? 320 : 420) / long);
     var sw = Math.max(160, Math.round(cw * scale));
     var sh = Math.max(160, Math.round(ch * scale));
 
@@ -351,11 +348,11 @@
   }
 
   /* ───────────────────────── input ─────────────────────────
-     Reached only on hover-capable devices (mouse/trackpad) -- touch/no-hover
-     devices returned via fallback() above and never get here, so the hint
-     stays "Move across the surface" unconditionally. */
+     On a phone you drag a finger instead of moving a cursor, so the hint
+     is reworded there. */
 
   var hint = document.getElementById('heroHint');
+  if (hint && isTouch) hint.textContent = 'Touch the surface';
   var touched = false;
 
   function setPointer(clientX, clientY) {

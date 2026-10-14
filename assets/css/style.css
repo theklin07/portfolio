@@ -328,7 +328,10 @@ button{ font:inherit; color:inherit; }
     grid-template-areas: "title" "ui" "anim" "desc";
   }
   .project__ui{ aspect-ratio:1/1; min-height:0; margin-top:1.2rem; }
-  .project__anim{ aspect-ratio:4/3; margin-top:1rem; }
+  /* the drawn stages (phones, dashboards, the ring) need height to read on a
+     phone; stages holding a wide screenshot keep the square box */
+  .project__ui[data-ui]{ aspect-ratio:4/5; }
+  .project__anim{ aspect-ratio:5/4; margin-top:1rem; }
   .project__desc{ grid-template-columns:minmax(0,1fr); }
 }
 
@@ -344,6 +347,13 @@ button{ font:inherit; color:inherit; }
 .photo-grid img { width: 100%; height: 220px; object-fit: cover; cursor: pointer;
   user-select: none; -webkit-user-drag: none; -webkit-touch-callout: none; }
 
+
+@media (max-width:620px){
+  /* two square photos per row, so phones get a grid like the desktop
+     instead of one column of heavily cropped strips */
+  .photo-grid{ grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+  .photo-grid img{ height:auto; aspect-ratio:1/1; }
+}
 /* hearts wandering across the Heart Collection (heart-decor.js): they float
    above the photos but let every click through */
 .section--photo{ overflow:hidden; }

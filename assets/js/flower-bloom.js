@@ -349,7 +349,7 @@
   function spawn(near) {
     var small = W < 700;
     var type = TYPES[Math.floor(Math.random() * TYPES.length)];
-    var R = (small ? rand(20, 28) : rand(30, 46)) * (type === 'breath' ? 1.12 : 1);
+    var R = (small ? rand(24, 34) : rand(30, 46)) * (type === 'breath' ? 1.12 : 1);
     var rects = textRects();
 
     for (var tries = 0; tries < 60; tries++) {
@@ -404,7 +404,7 @@
 
   function schedule(dt) {
     nextSpawn -= dt;
-    var max = W < 700 ? 3 : 8;
+    var max = W < 700 ? 5 : 8;
     if (nextSpawn > 0 || flowers.length >= max) return;
     var first = spawn(null);
     // sometimes a pair grows in from the same edge

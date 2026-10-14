@@ -74,14 +74,14 @@
     W = r.width; H = r.height;
     var rects = avoidRects();
     var small = window.innerWidth < 760;
-    var max = small ? 5 : MAX;
+    var max = small ? 8 : MAX;
     var placed = [], order = 0, last = -1;
 
     for (var tries = 0; tries < max * 40 && placed.length < max; tries++) {
       var kind;
       do { kind = Math.floor(Math.random() * HEARTS.length); } while (kind === last && HEARTS.length > 1);
       var k = HEARTS[kind];
-      var w = (small ? rand(40, 58) : rand(58, 100)) * k.scale, h = w * k.aspect;
+      var w = (small ? rand(44, 68) : rand(58, 100)) * k.scale, h = w * k.aspect;
       // a little of each heart may tuck past the section's side
       var box = { x: rand(-w * 0.25, W - w * 0.75), y: rand(8, H - h - 8), w: w, h: h };
       // tilted up to ~22°, a heart takes a bit more room than its upright box

@@ -54,7 +54,7 @@
     ctx.clearRect(0, 0, W, H);
 
     var m = Math.min(W, H);
-    var cx = W / 2, cy = H / 2, r = m * 0.34, sw = m * 0.07;
+    var cx = W / 2, cy = H / 2, r = m * (W > H ? 0.4 : 0.34), sw = m * 0.07;
     var day = 1 + (t % LOOP) / LOOP * DAYS;
     var dayInt = Math.floor(day);
     var phase = PHASES.filter(function (p) { return dayInt >= p.from && dayInt <= p.to; })[0];

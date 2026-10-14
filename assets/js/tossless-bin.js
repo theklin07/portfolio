@@ -77,7 +77,7 @@
 
     // The bin stands alone, centred low, with room above for the food to arc.
     // Works for the tall stage on desktop and the wide one on phones.
-    var s = Math.min(H * 0.56, W * 0.74);
+    var s = Math.min(H * 0.72, W * 0.74);
     var binX = (W - s) / 2, binY = H * 0.95 - s;
     L = {
       s: s, x: binX, y: binY,
