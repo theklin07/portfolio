@@ -122,28 +122,26 @@ button{ font:inherit; color:inherit; }
     linear-gradient(155deg, rgba(255,255,255,.07) 0%, transparent 30%, transparent 68%, rgba(0,0,0,.12) 100%),
     var(--green);
 }
-/* Static stand-in for the WebGL liquid emboss, used whenever WebGL2 (or one of
-   its float render-target extensions) isn't available -- e.g. Low Power Mode,
-   memory pressure, or an older GPU. Built to look like a deliberate engraved
-   plate on its own, not a broken version of the animated one: a soft
-   highlight/shadow pair reads the relief, and a diagonal gradient clipped to
-   the glyphs gives it the same quiet sheen instead of flat dead type. */
+/* Static stand-in for the WebGL liquid emboss -- shown on every touch/
+   no-hover device (see liquid.js), and as a last-resort fallback if WebGL2
+   itself is unavailable anywhere else. Built to look like a deliberate
+   engraved plate on its own, not a broken version of the animated one. */
 .hero.is-fallback .hero__fallback-type{
   position:absolute; inset:0; display:grid; place-items:center;
   padding-inline:var(--pad);
   font-family:var(--f-display); font-weight:500;
   font-size:clamp(3.6rem,16vw,13rem); letter-spacing:-.025em; line-height:.92;
   text-align:center;
-  color:rgba(239,234,223,.05);
-  background-image:linear-gradient(160deg,
-    rgba(255,255,255,.30) 0%, rgba(239,234,223,.09) 42%,
-    rgba(0,0,0,.11) 64%, rgba(255,255,255,.15) 100%);
-  -webkit-background-clip:text; background-clip:text;
-  -webkit-text-fill-color:transparent;
+  /* A solid fill + layered shadow, not a gradient clipped to the glyphs --
+     background-clip:text stacked with text-shadow renders inconsistently
+     across Safari/Chrome/OS (reads muddy and flat on iOS in particular), so
+     this leans on the same sage accent already used for the hero dot
+     (#C8D9B2) instead of something that can misrender. */
+  color:rgba(200,217,178,.42);
   text-shadow:
-    0 1.5px 0 rgba(255,255,255,.16),
-    0 -1.5px 1.5px rgba(0,0,0,.32),
-    0 16px 36px rgba(0,0,0,.24);
+    0 1.5px 0 rgba(255,255,255,.22),
+    0 -2px 2px rgba(0,0,0,.38),
+    0 18px 38px rgba(0,0,0,.28);
   -webkit-text-stroke:0;
   user-select:none; pointer-events:none;
 }
