@@ -41,10 +41,20 @@
     if (hintEl) hintEl.remove();
   }
 
-  // Phones get the same liquid as the desktop, driven by finger drags. They
-  // run it at a lower resolution (see resize) so it stays smooth, and fall
-  // back to the static plate only if WebGL2 isn't available.
+  // Phones get the same liquid as the desktop. Two things differ there, and
+  // both are handled rather than accepted: the grid is bought by width (see
+  // resize), since a portrait hero sized by its longest side spends it all on
+  // empty height, and there is no hovering cursor to stir the pour, so the
+  // surface strokes itself (see stir). The static plate is for missing WebGL2.
   var isTouch = !window.matchMedia('(hover: hover)').matches;
+  // How much simulation to buy, and the ceiling on what it may cost. The
+  // target is cells ACROSS -- see resize.
+  var ACROSS  = isTouch ? 300    : 420;
+  var CELL_CAP = isTouch ? 190000 : 300000;
+  // A grid sized for a current phone can be too much for an old one, and the
+  // GPU can't be asked in advance. Real frames are measured instead, once,
+  // and the grid steps down if they come in slow (see the loop).
+  var perf = { n: 0, sum: 0, scale: 1, checked: false };
 
   var gl = canvas.getContext('webgl2', {
     alpha: false, antialias: false, depth: false, stencil: false,
@@ -324,15 +334,30 @@
     if (cw < 4 || ch < 4) { needsResize = true; return; }
     needsResize = false;
 
-    var dpr = Math.min(window.devicePixelRatio || 1, isTouch ? 1.5 : 2);
+    // A phone's hero is a fraction of a desktop's area, so it can afford the
+    // same pixel ratio -- and since the relief is sampled in the render pass,
+    // this is what decides whether the lettering reads crisp or soft.
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
     var w = Math.max(1, Math.round(cw * dpr));
     var h = Math.max(1, Math.round(ch * dpr));
     if (w === viewW && h === viewH) return;
     viewW = w; viewH = h;
     canvas.width = w; canvas.height = h;
 
-    var long = Math.max(cw, ch);
-    var scale = Math.min(1, (isTouch ? 320 : 420) / long);
+    // The grid is bought by WIDTH, because that is where the lettering is: it
+    // spans the hero, and how many cells fall across it is what decides whether
+    // a ripple reads as a ring or a blur. Sizing by the longest side instead --
+    // which on anything portrait means the height -- spends the whole grid on
+    // the empty space above and below the words. That is what made a phone so
+    // much coarser than a desktop: 390x740 came out 169 cells across, against
+    // 420 on a 1512-wide screen. A wide desktop lands on exactly the same grid
+    // either way; a phone, or a window dragged narrow, gains a great deal.
+    // The cell ceiling then keeps a very tall viewport from running away with
+    // the cost, since the grid is square-law in the scale.
+    var scale = Math.min(1, ACROSS / cw);
+    var cells = cw * scale * ch * scale;
+    if (cells > CELL_CAP) scale *= Math.sqrt(CELL_CAP / cells);
+    scale *= perf.scale;
     var sw = Math.max(160, Math.round(cw * scale));
     var sh = Math.max(160, Math.round(ch * scale));
 
@@ -354,6 +379,7 @@
   var hint = document.getElementById('heroHint');
   if (hint && isTouch) hint.textContent = 'Touch the surface';
   var touched = false;
+  var lastInput = -1e9;           // when a real pointer last moved the liquid
 
   function setPointer(clientX, clientY) {
     var r = hero.getBoundingClientRect();
@@ -374,6 +400,7 @@
     ptr.force = d > 0 ? Math.min(0.075, 0.010 + d * 0.90) : 0;
     ptr.active = true;
     ptr.moved = true;
+    lastInput = (window.performance && performance.now) ? performance.now() : Date.now();
     if (!touched) {
       touched = true;
       if (hint) hint.classList.add('is-gone');
@@ -385,7 +412,13 @@
     setPointer(e.clientX, e.clientY);
     drop = [ptr.x, ptr.y, 0.5];
   }, { passive: true });
-  hero.addEventListener('pointerleave', function () { ptr.active = false; ptr.force = 0; ptr.seeded = false; });
+  // A lifted finger has to let go of the trail as surely as a cursor leaving
+  // the hero does. Touch fires no pointerleave of its own on every device, and
+  // a pointer left marked active would both keep pressing and hold off stir().
+  function release() { ptr.active = false; ptr.force = 0; ptr.seeded = false; }
+  hero.addEventListener('pointerleave', release);
+  hero.addEventListener('pointerup', release, { passive: true });
+  hero.addEventListener('pointercancel', release, { passive: true });
 
   document.addEventListener('visibilitychange', function () { visible = !document.hidden; });
 
@@ -406,6 +439,82 @@
 
   var nextDrop = 900;
 
+  /* A touch device has no hovering pointer, so between drops nothing stirs the
+     pour and the hero reads as a still plate.
+
+     What stands in for the cursor is a stroke, not a drifting point. A point
+     that presses continuously digs a well wherever it rests, however gently it
+     pushes, because the sim keeps adding displacement in one place faster than
+     the damping takes it away. So this sweeps across the band the lettering
+     sits in over about a second -- easing in and out, pressing only in
+     proportion to how fast it is actually travelling -- and then lets go
+     entirely for a few seconds while the wake spreads out. A wake, the way a
+     passing cursor leaves one. It yields the moment a finger is on the glass
+     and picks the strokes back up shortly after it leaves. */
+  var drift = {
+    x: 0.5, y: 0.5, px: 0.5, py: 0.5, force: 0,
+    on: false, start: 0, dur: 0, ax: 0, ay: 0, bx: 0, by: 0, next: 1800
+  };
+  var lastFrame = 0;
+  var DRIFT_WAIT = 2200;          // ms of stillness before the strokes resume
+
+  function planStroke(elapsed) {
+    var rand = function (lo, hi) { return lo + Math.random() * (hi - lo); };
+    var dir = Math.random() < 0.5 ? 1 : -1;
+    var span = rand(0.42, 0.76);
+    drift.ax = dir > 0 ? rand(0.08, 0.30) : rand(0.70, 0.92);
+    drift.bx = Math.max(0.04, Math.min(0.96, drift.ax + dir * span));
+    drift.ay = rand(0.40, 0.62);
+    drift.by = Math.max(0.34, Math.min(0.68, drift.ay + rand(-0.12, 0.12)));
+    drift.dur = rand(900, 1500);
+    drift.start = elapsed;
+    drift.x = drift.px = drift.ax;
+    drift.y = drift.py = drift.ay;
+    drift.on = true;
+  }
+
+  function stir(elapsed, now) {
+    // A real finger always wins, and nothing presses for a moment after it
+    // leaves -- a stroke starting under a lifted finger reads as a glitch.
+    if (!isTouch || reduce || ptr.active || now - lastInput < DRIFT_WAIT) {
+      drift.on = false;
+      if (drift.next < elapsed + 700) drift.next = elapsed + 700;
+      return false;
+    }
+    if (!drift.on) {
+      if (elapsed < drift.next) return false;
+      planStroke(elapsed);
+    }
+    var k = (elapsed - drift.start) / drift.dur;
+    if (k >= 1) {                                  // let go, then wait
+      drift.on = false;
+      // Long enough apart to read as separate passes, close enough that the
+      // wake from one has not died before the next -- a three-second flat
+      // stretch would blank the lettering completely.
+      drift.next = elapsed + 1300 + Math.random() * 1700;
+      return false;
+    }
+    var e = k * k * (3 - 2 * k);                   // ease in and out
+    drift.px = drift.x; drift.py = drift.y;
+    drift.x = drift.ax + (drift.bx - drift.ax) * e;
+    drift.y = drift.ay + (drift.by - drift.ay) * e;
+    // Strictly proportional to the distance covered this frame: at the ends of
+    // the stroke, where it is barely moving, it barely presses. No floor, so it
+    // can never sit and bore a hole -- and the energy it puts in over a second
+    // is the same whether the screen refreshes at 60Hz or 120Hz.
+    var d = Math.hypot(drift.x - drift.px, drift.y - drift.py);
+    drift.force = Math.min(0.030, d * 1.6);
+    return true;
+  }
+
+  // Coarsen the grid and rebuild. viewW is cleared so resize() doesn't take
+  // its "canvas is already this size" short cut and skip the new targets.
+  function downshift() {
+    perf.scale = 0.72;
+    viewW = 0;
+    resize();
+  }
+
   function frame(now) {
     requestAnimationFrame(frame);
     if (needsResize) resize();
@@ -413,16 +522,43 @@
     if (!started) started = now;
     var elapsed = now - started;
 
-    // occasional stray drops so the pool is never dead
+    // One honest look at how the device is coping, after the opening swell has
+    // settled: ~90 frames of real frame times, outliers from a backgrounded
+    // tab ignored. A soft pour beats a stuttering one.
+    if (!perf.checked && elapsed > 700) {
+      var dt = now - lastFrame;
+      if (lastFrame && dt < 100) { perf.sum += dt; perf.n++; }
+      if (perf.n >= 90) {
+        perf.checked = true;
+        if (perf.sum / perf.n > 26) downshift();      // slower than ~38fps
+      }
+    }
+    lastFrame = now;
+
+    // Occasional stray drops so the pool is never dead. On a phone they are
+    // the visitor's first impression of the liquid rather than a garnish on a
+    // cursor's wake, so they come about twice as often, land nearer the words
+    // and hit softer -- frequent and gentle reads as a live pour, where
+    // sparse and hard reads as a plate being struck.
     if (!reduce && elapsed > nextDrop) {
       var scripted = elapsed < 3800;               // opening swell over the words
+      var near = scripted || isTouch;
       drop = [
-        scripted ? 0.30 + Math.random() * 0.40 : Math.random(),
-        scripted ? 0.42 + Math.random() * 0.22 : Math.random(),
-        scripted ? 0.105 : 0.042 + Math.random() * 0.022
+        near ? 0.30 + Math.random() * 0.40 : Math.random(),
+        near ? 0.40 + Math.random() * 0.26 : Math.random(),
+        scripted ? 0.105 : isTouch ? 0.030 + Math.random() * 0.016
+                                   : 0.042 + Math.random() * 0.022
       ];
-      nextDrop = elapsed + (scripted ? 1600 : 9000 + Math.random() * 7000);
+      nextDrop = elapsed + (scripted ? 1600
+                          : isTouch ? 4200 + Math.random() * 3200
+                                    : 9000 + Math.random() * 7000);
     }
+
+    var drifting = stir(elapsed, now);
+    // Whatever is disturbing the surface this frame: a finger if one is on the
+    // glass, otherwise the drift.
+    var src = drifting ? drift : ptr;
+    var force = drifting ? drift.force : (ptr.active ? ptr.force : 0);
 
     var steps = reduce ? 0 : 1;
     for (var i = 0; i < steps; i++) {
@@ -432,9 +568,9 @@
         gl.uniform1i(uS.uPrev, 0);
         gl.uniform2f(uS.uTexel, 1 / A.w, 1 / A.h);
         gl.uniform2f(uS.uAspect, aspect[0], aspect[1]);
-        gl.uniform2f(uS.uPtrA, ptr.px, ptr.py);
-        gl.uniform2f(uS.uPtrB, ptr.x, ptr.y);
-        gl.uniform1f(uS.uPtrForce, ptr.active ? ptr.force : 0);
+        gl.uniform2f(uS.uPtrA, src.px, src.py);
+        gl.uniform2f(uS.uPtrB, src.x, src.y);
+        gl.uniform1f(uS.uPtrForce, force);
         gl.uniform1f(uS.uPtrRadius, 0.095);
         gl.uniform3f(uS.uDrop, drop[0], drop[1], drop[2]);
         gl.uniform1f(uS.uDamp, 0.9955);
@@ -461,7 +597,11 @@
       gl.uniform2f(uR.uRes, viewW, viewH);
       // Nothing moves under reduced motion, so nothing would ever reveal the
       // relief -- hold it permanently raised instead of leaving a blank field.
-      gl.uniform1f(uR.uRestVis, reduce ? 0.55 : 0.018);
+      // A desktop cursor is almost always moving, so the relief is almost
+      // always partly lit. Touch has no such thing: between strokes the plate
+      // would go properly blank. A little resting visibility there stands in
+      // for the cursor rather than giving phones something desktops lack.
+      gl.uniform1f(uR.uRestVis, reduce ? 0.55 : isTouch ? 0.045 : 0.018);
     });
   }
 

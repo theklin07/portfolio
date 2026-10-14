@@ -61,6 +61,38 @@ permanently raised instead — a static embossed “Be kind” rather than a bla
 The liquid only responds to actual movement: a cursor left sitting on the hero
 stops disturbing it rather than drilling a well where it rests.
 
+### On phones
+
+Phones run the same liquid as desktops, with two differences that exist because
+a phone is not a desktop, not because it is treated as lesser.
+
+**The grid is bought by width.** The simulation's resolution is set from the
+hero's *width*, not its longest side, because the lettering spans the width and
+the number of cells across it decides whether a ripple reads as a ring or a
+blur. Sizing by the longest side — which on anything portrait is the height —
+spends the grid on the empty space above and below the words. A wide desktop
+lands on exactly the same 420×239 grid either way; a 375-wide phone goes from
+160 cells across to 296. `ACROSS` and `CELL_CAP` at the top of `liquid.js` set
+the target and the ceiling (300 / 190k on touch, 420 / 300k with a pointer).
+`CELL_CAP` matters because cost is square-law in the scale.
+
+**Strokes stand in for the cursor.** A phone has no hovering pointer, so between
+drops nothing would stir the pour and the hero would read as a still plate. So
+it sweeps a point across the band the lettering sits in — about a second, easing
+in and out, pressing only in proportion to how fast it is travelling — then lets
+go for a few seconds while the wake spreads. It yields the instant a finger
+touches the glass and resumes `DRIFT_WAIT` after it leaves. It presses with *no*
+floor on the force, deliberately: a point that pushes continuously bores a well
+wherever it rests, however gently, which is the same artefact a resting cursor
+used to cause. `planStroke` sets where the sweeps go and how often.
+
+`uRestVis` is also a little higher on touch (0.045 against 0.018), since there is
+no cursor keeping the relief lit between strokes.
+
+If the first ~90 frames average slower than ~38fps, the grid steps down once by
+28% and stays there — an old phone gets a softer pour rather than a stuttering
+one. This is in `downshift()`.
+
 ---
 
 ## Project layout
