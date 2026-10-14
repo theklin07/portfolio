@@ -33,9 +33,7 @@ Tuning constants at the top of the fragment shader in `assets/js/liquid.js`:
 | `WAVE` | how far a swell tilts the surface |
 | `EMBOSS` | relief of the lettering |
 | `SHEEN` | breadth of the gloss highlight |
-| `THICK` | **body of the pour over the plate**, as a fraction of the hero's width — how far the liquid spreads the relief it carries. The one to turn if the lettering looks too sharp or too soft |
-| `SWIM` | how far a moving pour drags the bump it raises along with it |
-| `BREATHE` | how much the pour's own depth smothers the relief |
+| `SOFT` (JS, by the uniform lookups) | **body of the pour over the plate — touch only.** `thick` is how far the liquid spreads the relief, as a fraction of the hero's width; `swim` is how far a moving pour drags the bump along with it; `breathe` is how much the pour's own depth smothers it. A pointer device passes zeros and gets the sharp read instead |
 | `uRestVis` (JS, near the bottom) | how much of the relief a *still* surface keeps — raise it to leave the words permanently legible |
 
 ### Changing the phrase
@@ -64,25 +62,33 @@ permanently raised instead — a static embossed “Be kind” rather than a bla
 The liquid only responds to actual movement: a cursor left sitting on the hero
 stops disturbing it rather than drilling a well where it rests.
 
-### Keeping the lettering *in* the liquid
+### Two reads of the relief
 
-A thick pour cannot hold a sharp edge, so the relief is deliberately not read at
-full sharpness. Three things keep the words part of the surface rather than
-printed on it, and all three are constants in the render shader:
+The hero reads the lettering one of two ways, chosen by device in `SOFT` next to
+the uniform lookups in `liquid.js`.
 
-- **`THICK`** spreads the relief over a wide kernel, in two rings so the edge
-  ramps instead of stepping. Reading it at texel sharpness describes a pour with
-  no thickness at all, which is exactly what makes lettering look stuck on top.
-  Because the spread is a fraction of the hero's *width*, and the type is sized
-  off the width too, a phone and a desktop come out equally soft.
-  **Raise it for a heavier pour and softer words, lower it for a crisper edge.**
-  Past about `0.007` the thin strokes start to dissolve.
-- **`SWIM`** offsets where the relief is sampled by the liquid's own slope, so
-  the bump travels with the pour. Lettering pinned to fixed pixels while the
-  liquid slides across it reads as a decal.
-- **`BREATHE`** ties the relief's strength to the local depth: it presses
+**Pointer devices get the sharp read** — the gradient straight off the text, one
+ring, a couple of texels wide. Crisp, cut edges. This is the hero's original
+look and what the desktop uses.
+
+**Touch gets the soft read**, where the words swell up under the pour instead of
+sitting sharp on it. Three parts, all passed in as uniforms:
+
+- **`thick`** (0.0058) spreads the relief over a wide kernel, in two rings so
+  the edge ramps instead of stepping. Reading it at texel sharpness describes a
+  pour with no thickness at all. The spread is a fraction of the hero's *width*,
+  and the type is sized off the width too, so phones and tablets of any size
+  come out equally soft. **Raise it for a heavier pour and softer words, lower
+  it for a crisper edge.** Past about `0.007` the thin strokes dissolve.
+- **`swim`** (0.10) offsets where the relief is sampled by the liquid's own
+  slope, so the bump travels with the pour rather than staying pinned to fixed
+  pixels.
+- **`breathe`** (1.6) ties the relief's strength to the local depth: it presses
   through where the pour has been pushed thin and is smothered where it has
-  piled up, so the words come up hardest in the wake of a finger or cursor.
+  piled up, so the words come up hardest in the wake of a finger.
+
+To give the desktop the soft read as well, give `SOFT` the same three numbers on
+both branches.
 
 ### On phones
 
@@ -99,18 +105,14 @@ lands on exactly the same 420×239 grid either way; a 375-wide phone goes from
 the target and the ceiling (300 / 190k on touch, 420 / 300k with a pointer).
 `CELL_CAP` matters because cost is square-law in the scale.
 
-**Strokes stand in for the cursor.** A phone has no hovering pointer, so between
-drops nothing would stir the pour and the hero would read as a still plate. So
-it sweeps a point across the band the lettering sits in — about a second, easing
-in and out, pressing only in proportion to how fast it is travelling — then lets
-go for a few seconds while the wake spreads. It yields the instant a finger
-touches the glass and resumes `DRIFT_WAIT` after it leaves. It presses with *no*
-floor on the force, deliberately: a point that pushes continuously bores a well
-wherever it rests, however gently, which is the same artefact a resting cursor
-used to cause. `planStroke` sets where the sweeps go and how often.
+**Nothing moves the surface on its own.** The liquid responds to finger drags
+and to the occasional stray drop, and otherwise lies still — there is no
+simulated cursor wandering the hero. Drops come about twice as often on touch,
+land nearer the words and hit softer, since on a phone they are the only motion
+a visitor sees before touching.
 
-`uRestVis` is also a little higher on touch (0.045 against 0.018), since there is
-no cursor keeping the relief lit between strokes.
+`uRestVis` is also a little higher on touch (0.045 against 0.018), so the relief
+keeps a faint presence rather than the plate going fully blank between drops.
 
 If the first ~90 frames average slower than ~38fps, the grid steps down once by
 28% and stays there — an old phone gets a softer pour rather than a stuttering

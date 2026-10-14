@@ -41,11 +41,12 @@
     if (hintEl) hintEl.remove();
   }
 
-  // Phones get the same liquid as the desktop. Two things differ there, and
-  // both are handled rather than accepted: the grid is bought by width (see
-  // resize), since a portrait hero sized by its longest side spends it all on
-  // empty height, and there is no hovering cursor to stir the pour, so the
-  // surface strokes itself (see stir). The static plate is for missing WebGL2.
+  // Phones get the same liquid as the desktop, driven by finger drags. Two
+  // things differ there: the grid is bought by width (see resize), since a
+  // portrait hero sized by its longest side spends it all on empty height, and
+  // the relief is read softly (see SOFT), so the lettering swells up under the
+  // pour rather than sitting sharp on it. Nothing moves the surface on its
+  // own. The static plate is only for missing WebGL2.
   var isTouch = !window.matchMedia('(hover: hover)').matches;
   // How much simulation to buy, and the ceiling on what it may cost. The
   // target is cells ACROSS -- see resize.
@@ -138,6 +139,12 @@
   uniform float uTime;
   uniform vec2  uRes;
   uniform float uRestVis;    // trace of the relief left on still liquid
+  // How much body the pour is given over the plate. Set per device in JS: a
+  // pointer device passes 0 and gets the sharp read the hero shipped with,
+  // touch passes the softened one. See SOFT in the frame loop.
+  uniform float uThick;      // spread of the relief, as a fraction of the width
+  uniform float uSwim;       // how far a moving pour drags the bump with it
+  uniform float uBreathe;    // how much the pour's own depth smothers it
 
   const vec3  GREEN = vec3(0.302, 0.396, 0.243);   // #4D653E, straight
   const vec3  SUN   = vec3(0.94,  0.98,  0.86);
@@ -145,13 +152,6 @@
   const float WAVE     = 26.0;   // how far a swell tilts the surface
   const float EMBOSS   = 9.5;    // relief of the lettering
   const float SHEEN    = 0.16;   // broad gloss -- pigment, not glitter
-  const float THICK    = 0.0058; // body over the plate, as a fraction of the
-                                 // hero's width: how far the pour spreads the
-                                 // relief it carries. Raise for a heavier pour
-                                 // and softer lettering, lower for a thinner
-                                 // one and a crisper edge.
-  const float SWIM     = 0.10;   // how far a moving pour drags the bump with it
-  const float BREATHE  = 1.6;    // how much the pour's own depth smothers it
 
   float txt(vec2 p){ return texture(uText, p).r; }
 
@@ -177,35 +177,39 @@
     energy = smoothstep(0.0, 0.8, energy);
     float reveal = uRestVis + (1.0 - uRestVis) * energy;
 
-    // A thick pour cannot hold a sharp edge. The surface over a relief is a
-    // low-pass of it -- the heavier the body, the broader and softer the bump
-    // it raises -- so the relief is read over a wide kernel, and over two rings
-    // so the edge ramps rather than steps. Reading it at texel sharpness, as
-    // this did, describes a pour with no thickness at all, which is precisely
-    // what makes lettering look printed on the liquid instead of under it.
-    // The spread is a fraction of the hero's WIDTH, corrected for its shape so
-    // it stays round on screen; the lettering is sized off the width too, so a
-    // phone and a desktop end up equally soft.
-    vec2 spread = vec2(THICK, THICK * uRes.x / uRes.y);
-    vec2 tt = max(uTextTexel * 2.2, spread);
+    // How the relief is read decides whether the lettering looks pressed into
+    // the plate under the pour or printed on top of it.
+    vec2 gradT;
+    if (uThick <= 0.0) {
+      // Sharp: the gradient straight off the text, one ring, a couple of
+      // texels wide. Crisp, cut edges -- the hero's original look.
+      vec2 tt = uTextTexel * 2.2;
+      gradT = vec2(txt(uv + vec2(tt.x, 0.0)) - txt(uv - vec2(tt.x, 0.0)),
+                   txt(uv + vec2(0.0, tt.y)) - txt(uv - vec2(0.0, tt.y)))
+              * EMBOSS * reveal;
+    } else {
+      // Soft: a thick pour cannot hold a sharp edge, so the relief is read
+      // over a wide kernel and over two rings, making the edge ramp rather
+      // than step. The spread is a fraction of the hero's WIDTH, corrected for
+      // its shape so it stays round on screen.
+      vec2 spread = vec2(uThick, uThick * uRes.x / uRes.y);
+      vec2 tt = max(uTextTexel * 2.2, spread);
 
-    // The relief is fixed to the plate, but the pour above it slides, and the
-    // bump it raises slides with it. Lettering pinned to the same pixels while
-    // the liquid travels across it reads as a decal lying on the surface.
-    vec2 tuv = uv - gradRaw * SWIM;
+      // The relief is fixed to the plate, but the pour above it slides, and
+      // the bump it raises slides with it.
+      vec2 tuv = uv - gradRaw * uSwim;
 
-    vec2 g1 = vec2(txt(tuv + vec2(tt.x, 0.0)) - txt(tuv - vec2(tt.x, 0.0)),
-                   txt(tuv + vec2(0.0, tt.y)) - txt(tuv - vec2(0.0, tt.y)));
-    vec2 w  = tt * 2.1;
-    vec2 g2 = vec2(txt(tuv + vec2(w.x, 0.0)) - txt(tuv - vec2(w.x, 0.0)),
-                   txt(tuv + vec2(0.0, w.y)) - txt(tuv - vec2(0.0, w.y)));
-    // Deep where the pour has piled up, thin where it has been pushed aside.
-    // Relief presses through a thin skin and is smothered under a deep one, so
-    // the lettering breathes with the liquid rather than holding one fixed
-    // strength beneath all of it -- the push of a finger thins the pour over
-    // the plate, and the words come up hardest exactly in its wake.
-    float skin = clamp(1.0 - h * BREATHE, 0.45, 1.6);
-    vec2  gradT = (g1 * 0.55 + g2 * 0.45) * EMBOSS * reveal * skin;
+      vec2 g1 = vec2(txt(tuv + vec2(tt.x, 0.0)) - txt(tuv - vec2(tt.x, 0.0)),
+                     txt(tuv + vec2(0.0, tt.y)) - txt(tuv - vec2(0.0, tt.y)));
+      vec2 w  = tt * 2.1;
+      vec2 g2 = vec2(txt(tuv + vec2(w.x, 0.0)) - txt(tuv - vec2(w.x, 0.0)),
+                     txt(tuv + vec2(0.0, w.y)) - txt(tuv - vec2(0.0, w.y)));
+
+      // Deep where the pour has piled up, thin where it has been pushed aside:
+      // relief presses through a thin skin and is smothered under a deep one.
+      float skin = clamp(1.0 - h * uBreathe, 0.45, 1.6);
+      gradT = (g1 * 0.55 + g2 * 0.45) * EMBOSS * reveal * skin;
+    }
 
     // One opaque surface: the swell and the relief pushing through it.
     vec3 N = normalize(vec3(-(gradH + gradT), 1.0));
@@ -274,7 +278,14 @@
     return o;
   }
   var uS = uni(pSim, ['uPrev','uTexel','uAspect','uPtrA','uPtrB','uPtrForce','uPtrRadius','uDrop','uDamp','uVisc']);
-  var uR = uni(pRender, ['uSim','uText','uSimTexel','uTextTexel','uTime','uRes','uRestVis']);
+  var uR = uni(pRender, ['uSim','uText','uSimTexel','uTextTexel','uTime','uRes','uRestVis',
+                         'uThick','uSwim','uBreathe']);
+
+  // Body of the pour over the plate. A pointer device gets zeros, which is the
+  // sharp, cut-edged relief the hero shipped with. Touch gets the softened
+  // read, where the lettering swells up under the pour instead.
+  var SOFT = isTouch ? { thick: 0.0058, swim: 0.10, breathe: 1.6 }
+                     : { thick: 0,      swim: 0,    breathe: 0 };
 
   function makeTarget(w, h) {
     var tex = gl.createTexture();
@@ -409,7 +420,6 @@
   var hint = document.getElementById('heroHint');
   if (hint && isTouch) hint.textContent = 'Touch the surface';
   var touched = false;
-  var lastInput = -1e9;           // when a real pointer last moved the liquid
 
   function setPointer(clientX, clientY) {
     var r = hero.getBoundingClientRect();
@@ -430,7 +440,6 @@
     ptr.force = d > 0 ? Math.min(0.075, 0.010 + d * 0.90) : 0;
     ptr.active = true;
     ptr.moved = true;
-    lastInput = (window.performance && performance.now) ? performance.now() : Date.now();
     if (!touched) {
       touched = true;
       if (hint) hint.classList.add('is-gone');
@@ -443,8 +452,8 @@
     drop = [ptr.x, ptr.y, 0.5];
   }, { passive: true });
   // A lifted finger has to let go of the trail as surely as a cursor leaving
-  // the hero does. Touch fires no pointerleave of its own on every device, and
-  // a pointer left marked active would both keep pressing and hold off stir().
+  // the hero does -- not every device fires pointerleave for touch, and a
+  // pointer left marked active would go on pressing where it was released.
   function release() { ptr.active = false; ptr.force = 0; ptr.seeded = false; }
   hero.addEventListener('pointerleave', release);
   hero.addEventListener('pointerup', release, { passive: true });
@@ -469,73 +478,7 @@
 
   var nextDrop = 900;
 
-  /* A touch device has no hovering pointer, so between drops nothing stirs the
-     pour and the hero reads as a still plate.
-
-     What stands in for the cursor is a stroke, not a drifting point. A point
-     that presses continuously digs a well wherever it rests, however gently it
-     pushes, because the sim keeps adding displacement in one place faster than
-     the damping takes it away. So this sweeps across the band the lettering
-     sits in over about a second -- easing in and out, pressing only in
-     proportion to how fast it is actually travelling -- and then lets go
-     entirely for a few seconds while the wake spreads out. A wake, the way a
-     passing cursor leaves one. It yields the moment a finger is on the glass
-     and picks the strokes back up shortly after it leaves. */
-  var drift = {
-    x: 0.5, y: 0.5, px: 0.5, py: 0.5, force: 0,
-    on: false, start: 0, dur: 0, ax: 0, ay: 0, bx: 0, by: 0, next: 1800
-  };
   var lastFrame = 0;
-  var DRIFT_WAIT = 2200;          // ms of stillness before the strokes resume
-
-  function planStroke(elapsed) {
-    var rand = function (lo, hi) { return lo + Math.random() * (hi - lo); };
-    var dir = Math.random() < 0.5 ? 1 : -1;
-    var span = rand(0.42, 0.76);
-    drift.ax = dir > 0 ? rand(0.08, 0.30) : rand(0.70, 0.92);
-    drift.bx = Math.max(0.04, Math.min(0.96, drift.ax + dir * span));
-    drift.ay = rand(0.40, 0.62);
-    drift.by = Math.max(0.34, Math.min(0.68, drift.ay + rand(-0.12, 0.12)));
-    drift.dur = rand(900, 1500);
-    drift.start = elapsed;
-    drift.x = drift.px = drift.ax;
-    drift.y = drift.py = drift.ay;
-    drift.on = true;
-  }
-
-  function stir(elapsed, now) {
-    // A real finger always wins, and nothing presses for a moment after it
-    // leaves -- a stroke starting under a lifted finger reads as a glitch.
-    if (!isTouch || reduce || ptr.active || now - lastInput < DRIFT_WAIT) {
-      drift.on = false;
-      if (drift.next < elapsed + 700) drift.next = elapsed + 700;
-      return false;
-    }
-    if (!drift.on) {
-      if (elapsed < drift.next) return false;
-      planStroke(elapsed);
-    }
-    var k = (elapsed - drift.start) / drift.dur;
-    if (k >= 1) {                                  // let go, then wait
-      drift.on = false;
-      // Long enough apart to read as separate passes, close enough that the
-      // wake from one has not died before the next -- a three-second flat
-      // stretch would blank the lettering completely.
-      drift.next = elapsed + 1300 + Math.random() * 1700;
-      return false;
-    }
-    var e = k * k * (3 - 2 * k);                   // ease in and out
-    drift.px = drift.x; drift.py = drift.y;
-    drift.x = drift.ax + (drift.bx - drift.ax) * e;
-    drift.y = drift.ay + (drift.by - drift.ay) * e;
-    // Strictly proportional to the distance covered this frame: at the ends of
-    // the stroke, where it is barely moving, it barely presses. No floor, so it
-    // can never sit and bore a hole -- and the energy it puts in over a second
-    // is the same whether the screen refreshes at 60Hz or 120Hz.
-    var d = Math.hypot(drift.x - drift.px, drift.y - drift.py);
-    drift.force = Math.min(0.030, d * 1.6);
-    return true;
-  }
 
   // Coarsen the grid and rebuild. viewW is cleared so resize() doesn't take
   // its "canvas is already this size" short cut and skip the new targets.
@@ -584,12 +527,6 @@
                                     : 9000 + Math.random() * 7000);
     }
 
-    var drifting = stir(elapsed, now);
-    // Whatever is disturbing the surface this frame: a finger if one is on the
-    // glass, otherwise the drift.
-    var src = drifting ? drift : ptr;
-    var force = drifting ? drift.force : (ptr.active ? ptr.force : 0);
-
     var steps = reduce ? 0 : 1;
     for (var i = 0; i < steps; i++) {
       pass(B, pSim, function () {
@@ -598,9 +535,9 @@
         gl.uniform1i(uS.uPrev, 0);
         gl.uniform2f(uS.uTexel, 1 / A.w, 1 / A.h);
         gl.uniform2f(uS.uAspect, aspect[0], aspect[1]);
-        gl.uniform2f(uS.uPtrA, src.px, src.py);
-        gl.uniform2f(uS.uPtrB, src.x, src.y);
-        gl.uniform1f(uS.uPtrForce, force);
+        gl.uniform2f(uS.uPtrA, ptr.px, ptr.py);
+        gl.uniform2f(uS.uPtrB, ptr.x, ptr.y);
+        gl.uniform1f(uS.uPtrForce, ptr.active ? ptr.force : 0);
         gl.uniform1f(uS.uPtrRadius, 0.095);
         gl.uniform3f(uS.uDrop, drop[0], drop[1], drop[2]);
         gl.uniform1f(uS.uDamp, 0.9955);
@@ -632,6 +569,9 @@
       // would go properly blank. A little resting visibility there stands in
       // for the cursor rather than giving phones something desktops lack.
       gl.uniform1f(uR.uRestVis, reduce ? 0.55 : isTouch ? 0.045 : 0.018);
+      gl.uniform1f(uR.uThick,   SOFT.thick);
+      gl.uniform1f(uR.uSwim,    SOFT.swim);
+      gl.uniform1f(uR.uBreathe, SOFT.breathe);
     });
   }
 
